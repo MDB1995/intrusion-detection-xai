@@ -1,0 +1,17 @@
+# Secret keys - NEVER upload
+.env
+
+# Virtual environment - too large
+venv/
+
+# Dataset - too large for GitHub
+kddcup99.csv
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# SHAP plots (optional - can include if you want)
+# feature_importance.png
+# shap_summary.png

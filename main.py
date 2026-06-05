@@ -1,0 +1,102 @@
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score
+import shap
+import matplotlib.pyplot as plt
+from explain import explain_connection
+
+# Load your dataset
+df = pd.read_csv('kddcup99.csv')
+print("Dataset loaded", df.shape)
+
+# Convert the 'label' column to binary (0 for normal, 1 for attack)
+df['label'] = df['label'].apply(lambda x: 0 if x == 'normal' else 1)
+print("Labels converted")
+print("Normal (0):", (df['label'] == 0).sum())
+print("Attack (1):", (df['label'] == 1).sum())
+
+# Encode text columns into numbers
+le = LabelEncoder()
+for col in ['protocol_type', 'service', 'flag']:
+    df[col] = le.fit_transform(df[col]) 
+print("Categorical features encoded")
+
+# Split features and targets
+X = df.drop('label', axis=1)
+y = df['label']
+print("Features and target separated")
+print("Features shape:", X.shape)
+print("Target shape:", y.shape)
+
+# Check for missing values
+print("\n Missing values in features:", X.isnull().sum().sum())
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print("Data split into training and testing sets")
+print("Training set shape:", X_train.shape)
+print("Testing set shape:", X_test.shape)
+
+# Train a Random Forest Classifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)                     
+print("Model trained")
+
+# Make predictions and evaluate the model
+y_pred = model.predict(X_test)
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=['Normal', 'Attack']))
+print("Accuracy Score:")
+print(accuracy_score(y_test, y_pred))
+
+# SHAP values for explainability
+print("\nCalculating SHAP values... please wait.. ")
+
+# Use a small sample for speed
+X_sample = X_test.sample(100, random_state=42)
+
+# Create SHAP explainer
+explainer = shap.TreeExplainer(model)
+shap_values = explainer.shap_values(X_sample)
+
+# Shape is (100, 41, 2) → take attack class
+shap_attack = shap_values[:, :, 1]
+
+# Plot 1: Feature Importance Bar plot
+print("Generating Feature Importance plot...")
+shap.summary_plot(shap_attack, X_sample, plot_type="bar", show=False)
+plt.tight_layout()
+plt.savefig('feature_importance.png')
+plt.close()
+print("Saved: feature_importance.png")
+
+# Plot 2: SHAP Summary plot
+print("Generating SHAP Summary plot...")
+shap.summary_plot(shap_attack, X_sample, show=False)
+plt.tight_layout()
+plt.savefig('shap_summary.png')
+plt.close()
+print("Saved: shap_summary.png")
+
+print("Done!")
+
+
+# Show actual values for the 100 samples
+print("\nTop 5 features - actual values in your 100 samples:")
+print(X_sample[['dst_bytes', 'count', 'logged_in', 
+                 'src_bytes', 'srv_count']].describe())
+
+sample_idx = 0
+connection = X_sample.iloc[sample_idx]
+prediction = model.predict([connection])[0]
+
+explain_connection(connection, shap_attack[sample_idx], prediction, X, sample_idx)
+# report = explain_connection(connection, shap_row, prediction, X)
+# print(report)
+
+# print("Shape:", df.shape)
+
+# print("\nLabel distribution:")
+# print(df['label'].value_counts())
