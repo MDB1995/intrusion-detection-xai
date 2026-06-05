@@ -47,5 +47,11 @@ KDD Cup 1999 Network Intrusion Dataset
 | Recall | 1.00 |
 | F1-Score | 1.00 |
 
+## Synthetic Data Generation
+- Used CTGAN (Conditional GAN) to generate synthetic 
+  rare attack samples
+- Addresses class imbalance problem in real networks
+- Generated 500 synthetic attack samples as proof of concept
+
 ## Setup
 ```bash
