@@ -9,7 +9,7 @@ security reports.
 
 ## Project Overview
 This project detects network attacks from traffic data and explains 
-WHY each connection was flagged — making AI decisions transparent 
+WHY each connection was flagged : making AI decisions transparent 
 for security analysts.
 
 ## Features
