@@ -6,7 +6,7 @@ venv/
 
 # Dataset - too large for GitHub
 kddcup99.csv
-
+synthetic_attacks.csv
 # Python cache files
 __pycache__/
 *.pyc
@@ -15,3 +15,4 @@ __pycache__/
 # SHAP plots (optional - can include if you want)
 # feature_importance.png
 # shap_summary.png
+
