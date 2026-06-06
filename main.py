@@ -6,6 +6,7 @@ from sklearn.metrics import classification_report, accuracy_score
 import shap
 import matplotlib.pyplot as plt
 from explain import explain_connection
+import joblib
 
 # Load your dataset
 df = pd.read_csv('kddcup99.csv')
@@ -92,7 +93,27 @@ sample_idx = 0
 connection = X_sample.iloc[sample_idx]
 prediction = model.predict([connection])[0]
 
-explain_connection(connection, shap_attack[sample_idx], prediction, X, sample_idx)
+#explain_connection(connection, shap_attack[sample_idx], prediction, X, sample_idx)
+
+top_features, ai_explanation = explain_connection(connection, shap_attack[sample_idx], prediction, X, sample_idx)
+
+print("\n" + "="*60)
+print("SECURITY ANALYSIS REPORT")
+print("="*60)
+print(f"\nConnection #{sample_idx + 1} Analysis:")
+print(f"   Prediction: {'ATTACK' if prediction == 1 else ' NORMAL'}")
+print(f"\nTop 3 features:")
+for feat, shap_val in top_features.items():
+    actual_val = connection[feat]
+    print(f"\n   🔹 {feat}: {actual_val:.2f} (SHAP: {shap_val:.4f})")
+print("\n AI Explanation:")
+print("-"*60)
+print(ai_explanation)
+print("="*60)
+
+
+
+
 # report = explain_connection(connection, shap_row, prediction, X)
 # print(report)
 
@@ -100,3 +121,12 @@ explain_connection(connection, shap_attack[sample_idx], prediction, X, sample_id
 
 # print("\nLabel distribution:")
 # print(df['label'].value_counts())
+
+
+
+# Save model and data for app.py to use
+print("Saving model...")
+joblib.dump(model, 'model.pkl')
+joblib.dump(X_test, 'X_test.pkl')
+joblib.dump(X, 'X.pkl')
+print("Model saved!")

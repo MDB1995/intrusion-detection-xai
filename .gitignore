@@ -7,6 +7,7 @@ venv/
 # Dataset - too large for GitHub
 kddcup99.csv
 synthetic_attacks.csv
+*.pkl
 # Python cache files
 __pycache__/
 *.pyc
