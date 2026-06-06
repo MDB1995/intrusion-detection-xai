@@ -76,55 +76,115 @@ st.divider()
 
 # ── SHAP Analysis ──────────────────────────────────────
 if analyze_btn:
-    st.subheader("SHAP Explainability Analysis")
-    
-    with st.spinner("Calculating SHAP values..."):
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X_sample)
-        shap_attack = shap_values[:, :, 1]
+    with st.spinner("Running full analysis..."):
+        
+        # ── Calculate SHAP ─────────────────────────────
+        from explain import get_shap_values, explain_connection
+        from rag_explain import rag_explain
+        
+        shap_attack = get_shap_values(model, X_sample)
         shap_row = shap_attack[sample_idx]
-    
-    # SHAP bar plot
-    fig, ax = plt.subplots(figsize=(10, 6))
-    shap.summary_plot(
-        shap_attack, X_sample, 
-        plot_type="bar", show=False
-    )
-    st.pyplot(fig)
-    plt.close()
-
-    st.divider()
-
-    # ── AI Explanation ─────────────────────────────────
-    st.subheader("AI Security Report")
-    
-    with st.spinner("Generating AI explanation..."):
-        # Get top 3 features
+        
+        # Get top features
         feature_names = X.columns.tolist()
         shap_series = pd.Series(shap_row, index=feature_names)
         top_features = shap_series.abs().nlargest(3)
         
-        # Display top features
-        st.markdown("**Top 3 features that triggered this decision:**")
+        # Get LLM explanation
+        _, llm_explanation = explain_connection(
+            connection, shap_row, prediction, X, sample_idx
+        )
+        
+        # Get RAG explanation
+        rag_explanation, matched_threats = rag_explain(
+            top_features, prediction, connection
+        )
+    
+    # ── Three column layout ────────────────────────────
+    st.subheader("Complete Security Analysis")
+    st.markdown("""
+    <style>
+        [data-testid="column"] {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+    </style>
+""", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    
+    # Column 1: SHAP Analysis
+    with col1:
+        st.markdown("### SHAP Analysis")
+        st.markdown("**Top 3 features:**")
         for feat, shap_val in top_features.items():
             actual_val = connection[feat]
             avg_val = X[feat].mean()
-            col_a, col_b, col_c = st.columns(3)
-            with col_a:
-                st.metric(feat, f"{actual_val:.2f}")
-            with col_b:
-                st.metric("Average", f"{avg_val:.2f}")
-            with col_c:
-                st.metric("SHAP Impact", f"{shap_val:.4f}")
+            st.metric(
+                label=feat,
+                value=f"{actual_val:.2f}",
+                delta=f"avg: {avg_val:.2f}"
+            )
+            st.caption(f"SHAP impact: {shap_val:.4f}")
         
         st.divider()
+        st.markdown("**SHAP Bar Chart:**")
+        from explain import get_shap_bar_fig, get_shap_summary_fig
+        fig1 = get_shap_bar_fig(shap_attack, X_sample)
+        st.pyplot(fig1)
         
-        # Capture the explanation
-        top_features, ai_explanation = explain_connection(connection, shap_row, prediction, X, sample_idx)
+        st.markdown("**SHAP Summary Plot:**")
+        fig2 = get_shap_summary_fig(shap_attack, X_sample)
+        st.pyplot(fig2)
 
-        # Display Claude explanation
-        st.markdown("**🤖 Claude AI Analysis:**")
-        st.markdown(ai_explanation)
+        st.divider()
+        st.markdown("**SHAP Explanation:**")
+        
+        # Generate natural language explanation for SHAP
+        top_feat_name = list(top_features.index)[0]
+        top_feat_val = connection[top_feat_name]
+        top_feat_avg = X[top_feat_name].mean()
+        top_shap = list(top_features.values)[0]
+        
+        direction = "higher" if top_feat_val > top_feat_avg else "lower"
+        
+        st.info(f"""
+**Global Explanation (Bar Chart):**
+The bar chart shows the most important features 
+across all 100 analyzed connections. 
+**{top_feat_name}** has the highest average impact 
+on attack detection.
 
+**Local Explanation (Beeswarm):**
+Each dot represents one connection.
+🔴 Red = high feature value → pushes toward Attack
+🔵 Blue = low feature value → pushes toward Normal
+
+**For this specific connection:**
+The top trigger was **{top_feat_name}** with value 
+**{top_feat_val:.2f}** — which is {direction} than 
+the average of **{top_feat_avg:.2f}**. 
+This pushed the model toward 
+**{'ATTACK' if prediction == 1 else 'NORMAL'}** 
+with SHAP impact of **{top_shap:.4f}**.
+        """)
+
+    # Column 2: LLM Explanation
+    with col2:
+        st.markdown("### LLM Analysis")
+        st.markdown(llm_explanation)
+
+    # Column 3: RAG Threat Intelligence
+    with col3:
+        st.markdown("### MITRE ATT&CK Intel")
+        st.markdown("**Matched techniques:**")
+        for threat in matched_threats:
+            st.error(f"{threat['name']}")
+            st.caption(f"ID: {threat['id']}")
+        
+        st.divider()
+        st.markdown("**RAG Analysis:**")
+        st.markdown(rag_explanation)
 st.divider()
 st.caption("Built for AI-REASON project demonstration | Jönköping University")

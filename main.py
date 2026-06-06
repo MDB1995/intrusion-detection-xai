@@ -10,7 +10,11 @@ import joblib
 
 # Load your dataset
 df = pd.read_csv('kddcup99.csv')
-print("Dataset loaded", df.shape)
+synthetic_df = pd.read_csv('synthetic_attacks.csv')
+#df = pd.read_csv('synthetic_attacks.csv')  # Use synthetic data for better attack representation
+#print("Dataset loaded", df.shape)
+df = pd.concat([df, synthetic_df], ignore_index=True)
+print("Combined dataset shape:", df.shape)
 
 # Convert the 'label' column to binary (0 for normal, 1 for attack)
 df['label'] = df['label'].apply(lambda x: 0 if x == 'normal' else 1)
@@ -111,6 +115,22 @@ print("-"*60)
 print(ai_explanation)
 print("="*60)
 
+
+# RAG Enhanced Explanation
+from rag_explain import rag_explain
+print("\n" + "="*60)
+print("RAG-ENHANCED THREAT INTELLIGENCE REPORT")
+print("="*60)
+rag_explanation, matched_threats = rag_explain(
+    top_features, prediction, connection
+)
+print("\nMatched MITRE ATT&CK Techniques:")
+for threat in matched_threats:
+    print(f"  • {threat['name']} ({threat['id']})")
+print("\nAI Analysis with Threat Intelligence:")
+print("-"*60)
+print(rag_explanation)
+print("="*60)
 
 
 
