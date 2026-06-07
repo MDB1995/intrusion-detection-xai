@@ -53,5 +53,35 @@ KDD Cup 1999 Network Intrusion Dataset
 - Addresses class imbalance problem in real networks
 - Generated 500 synthetic attack samples as proof of concept
 
+## System Architecture
+
+The system has 4 layers:
+1. **Detection Layer** — Random Forest classifier (99.97% accuracy)
+2. **Explainability Layer** — SHAP TreeExplainer (global + local)
+3. **Communication Layer** — Claude LLM generates security reports
+4. **Threat Intelligence Layer** — RAG with ChromaDB + MITRE ATT&CK
+
+## Web Application
+Run the interactive demo:
+```bash
+python main.py        # Train and save model first
+streamlit run app.py  # Launch web app
+```
+
+The dashboard shows three columns:
+- SHAP Analysis with feature importance plots
+- LLM-generated security report
+- MITRE ATT&CK threat intelligence
+
+## Project Structure
+```
+intrusion-detection-xai/
+├── main.py          # ML pipeline + SHAP
+├── explain.py       # Claude LLM explanation
+├── rag_explain.py   # RAG + MITRE ATT&CK
+├── synthetic.py     # CTGAN synthetic data
+├── app.py           # Streamlit web app
+└── .gitignore
+```
 ## Setup
 ```bash
