@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ── Title ─────────────────────────────────────────────
-st.title("AI-Powered Network Intrusion Detection System")
+st.title("Network Intrusion Detection System")
 st.markdown("*Explainable AI for Security Operations — Inspired by AI-REASON project*")
 st.divider()
 
@@ -39,14 +39,14 @@ st.sidebar.markdown("Select a connection to analyze:")
 sample_idx = st.sidebar.slider(
     "Connection Number", 
     min_value=0, 
-    max_value=100, 
+    max_value=500, 
     value=0
 )
 
 analyze_btn = st.sidebar.button("Analyze Connection", type="primary")
 
 # ── Main content ───────────────────────────────────────
-X_sample = X_test.sample(101, random_state=42)
+X_sample = X_test.sample(501, random_state=42)
 
 col1, col2 = st.columns(2)
 
@@ -138,6 +138,11 @@ if analyze_btn:
         fig2 = get_shap_summary_fig(shap_attack, X_sample)
         st.pyplot(fig2)
 
+        st.markdown("**This Connection Specifically:**")
+        from explain import get_shap_local_fig
+        fig3 = get_shap_local_fig(shap_attack, X_sample, sample_idx)
+        st.pyplot(fig3)
+
         st.divider()
         st.markdown("**SHAP Explanation:**")
         
@@ -186,5 +191,87 @@ with SHAP impact of **{top_shap:.4f}**.
         st.divider()
         st.markdown("**RAG Analysis:**")
         st.markdown(rag_explanation)
-st.divider()
-st.caption("Built for AI-REASON project demonstration | Jönköping University")
+
+    st.divider()
+
+    # ── Final Aggregated Summary ───────────────────────────
+    st.subheader("Final Verdict & Recommended Action")
+
+    with st.spinner("Aggregating all analysis..."):
+        
+        # Build aggregated prompt
+        feature_summary = "\n".join([
+            f"- {feat}: value={connection[feat]:.2f}, SHAP impact={shap_val:.4f}"
+            for feat, shap_val in top_features.items()
+        ])
+        
+        mitre_summary = "\n".join([
+            f"- {t['name']} ({t['id']}): {t['mitigation']}"
+            for t in matched_threats
+        ])
+        
+        aggregation_prompt = f"""
+    You are a senior cybersecurity analyst making a final decision.
+
+    You have received THREE independent analyses. Reference each one explicitly:
+
+    1. SHAP ANALYSIS found these top triggers:
+    {chr(10).join([f"   • {feat}: value={connection[feat]:.2f} (SHAP impact={shap_val:.4f})" for feat, shap_val in top_features.items()])}
+
+    2. LLM ANALYSIS identified:
+    {llm_explanation[:200]}...
+
+    3. RAG THREAT INTELLIGENCE matched:
+    {chr(10).join([f"   • {t['name']} ({t['id']})" for t in matched_threats])}
+
+    Write your final verdict in this EXACT format:
+
+    ## SHAP Says:
+    One sentence summarizing what the top SHAP features indicate
+
+    ## LLM Says:
+    One sentence summarizing the LLM attack identification
+
+    ## RAG Says:
+    One sentence summarizing the MITRE ATT&CK match
+
+    ## Final Verdict:
+    - **Attack Type:** (specific name)
+    - **Confidence:** High/Medium/Low
+    - **Reason:** One sentence combining all three analyses
+
+    ## Immediate Action:
+    One clear directive — what to do RIGHT NOW
+
+    ## 30-Minute Plan:
+    - Point 1
+    - Point 2
+    - Point 3
+    """
+        
+        from anthropic import Anthropic
+        from dotenv import load_dotenv
+        import os
+        load_dotenv()
+        
+        final_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        
+        final_message = final_client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=400,
+            messages=[{"role": "user", "content": aggregation_prompt}]
+        )
+        
+        # Display with clear visual
+        if prediction == 1:
+            st.error("THREAT CONFIRMED")
+        else:
+            st.success("NO THREAT DETECTED")
+        
+        st.markdown(final_message.content[0].text)
+        
+        # Action button
+        st.warning(" Take action now based on the recommendations above!")
+    
+    st.divider()
+    st.caption("Built for AI-REASON project demonstration | Jönköping University")

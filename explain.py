@@ -26,6 +26,21 @@ def get_shap_summary_fig(shap_attack, X_sample):
     plt.tight_layout()
     return fig
 
+def get_shap_local_fig(shap_attack, X_sample, sample_idx):
+    """Shows SHAP explanation for ONE specific connection"""
+    fig, ax = plt.subplots(figsize=(10, 4))
+    shap.waterfall_plot(
+        shap.Explanation(
+            values=shap_attack[sample_idx],
+            base_values=0,
+            data=X_sample.iloc[sample_idx],
+            feature_names=X_sample.columns.tolist()
+        ),
+        show=False
+    )
+    plt.tight_layout()
+    return fig
+
 def explain_connection(connection, shap_row, prediction, X, sample_idx):
     feature_names = X.columns.tolist()
     shap_series = pd.Series(shap_row, index=feature_names)

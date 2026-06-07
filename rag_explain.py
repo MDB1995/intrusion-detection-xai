@@ -90,7 +90,7 @@ for item in threat_data:
         ids=[item["id"]]
     )
 
-print("✅ RAG system ready!")
+print("RAG system ready!")
 
 def rag_explain(top_features, prediction, connection):
     """
@@ -175,18 +175,18 @@ if __name__ == "__main__":
     }
     
     print("\n" + "="*60)
-    print("🔍 RAG-ENHANCED SECURITY ANALYSIS")
+    print(" RAG-ENHANCED SECURITY ANALYSIS")
     print("="*60)
     
     explanation, matched_threats = rag_explain(
         top_features, 1, connection
     )
     
-    print("\n📚 Matched MITRE ATT&CK Techniques:")
+    print("\nMatched MITRE ATT&CK Techniques:")
     for threat in matched_threats:
         print(f"  • {threat['name']} ({threat['id']})")
     
-    print("\n🤖 AI Analysis with Threat Intelligence:")
+    print("\nAI Analysis with Threat Intelligence:")
     print("-"*60)
     print(explanation)
     print("="*60)
