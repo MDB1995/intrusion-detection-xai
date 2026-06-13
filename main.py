@@ -7,6 +7,9 @@ import shap
 import matplotlib.pyplot as plt
 from explain import explain_connection
 import joblib
+from sklearn.ensemble import IsolationForest
+import numpy as np
+
 
 # Load your dataset
 df = pd.read_csv('kddcup99.csv')
@@ -86,6 +89,35 @@ plt.close()
 print("Saved: shap_summary.png")
 
 print("Done!")
+
+# ── Anomaly Detection (Behavioral Analysis) ───────────
+
+print("\nTraining Anomaly Detection model...")
+
+# Train on NORMAL traffic only
+X_normal = X_train[y_train == 0]
+anomaly_detector = IsolationForest(
+    contamination=0.1,
+    random_state=42,
+    n_jobs=-1
+)
+anomaly_detector.fit(X_normal)
+print("Anomaly detector trained on normal behavior!")
+
+# Test anomaly detection
+anomaly_scores = anomaly_detector.decision_function(X_test)
+anomaly_predictions = anomaly_detector.predict(X_test)
+# -1 = anomaly, 1 = normal
+
+# Count detected anomalies
+n_anomalies = (anomaly_predictions == -1).sum()
+print(f"Anomalies detected in test set: {n_anomalies}")
+print(f"That is {n_anomalies/len(X_test)*100:.2f}% of test connections")
+
+# Save anomaly detector
+joblib.dump(anomaly_detector, 'anomaly_model.pkl')
+print("Anomaly model saved!")
+
 
 
 # Show actual values for the 100 samples

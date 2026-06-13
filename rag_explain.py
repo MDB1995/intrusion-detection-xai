@@ -157,36 +157,36 @@ Be specific, concise, and actionable.
 
 
 # ── Test it ────────────────────────────────────────────
-if __name__ == "__main__":
-    import pandas as pd
+# if __name__ == "__main__":
+#     import pandas as pd
     
-    # Simulate SHAP top features from your project
-    top_features = pd.Series({
-        'dst_host_srv_serror_rate': 0.034,
-        'src_bytes': 0.030,
-        'srv_count': 0.035
-    })
+#     # Simulate SHAP top features from your project
+#     top_features = pd.Series({
+#         'dst_host_srv_serror_rate': 0.034,
+#         'src_bytes': 0.030,
+#         'srv_count': 0.035
+#     })
     
-    # Simulate connection values
-    connection = {
-        'dst_host_srv_serror_rate': 1.0,
-        'src_bytes': 0.0,
-        'srv_count': 2.0
-    }
+#     # Simulate connection values
+#     connection = {
+#         'dst_host_srv_serror_rate': 1.0,
+#         'src_bytes': 0.0,
+#         'srv_count': 2.0
+#     }
     
-    print("\n" + "="*60)
-    print(" RAG-ENHANCED SECURITY ANALYSIS")
-    print("="*60)
+#     print("\n" + "="*60)
+#     print(" RAG-ENHANCED SECURITY ANALYSIS")
+#     print("="*60)
     
-    explanation, matched_threats = rag_explain(
-        top_features, 1, connection
-    )
+#     explanation, matched_threats = rag_explain(
+#         top_features, 1, connection
+#     )
     
-    print("\nMatched MITRE ATT&CK Techniques:")
-    for threat in matched_threats:
-        print(f"  • {threat['name']} ({threat['id']})")
+#     print("\nMatched MITRE ATT&CK Techniques:")
+#     for threat in matched_threats:
+#         print(f"  • {threat['name']} ({threat['id']})")
     
-    print("\nAI Analysis with Threat Intelligence:")
-    print("-"*60)
-    print(explanation)
-    print("="*60)
+#     print("\nAI Analysis with Threat Intelligence:")
+#     print("-"*60)
+#     print(explanation)
+#     print("="*60)

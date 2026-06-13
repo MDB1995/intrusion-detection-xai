@@ -42,15 +42,15 @@ def get_shap_local_fig(shap_attack, X_sample, sample_idx):
     return fig
 
 def explain_connection(connection, shap_row, prediction, X, sample_idx):
-    feature_names = X.columns.tolist()
-    shap_series = pd.Series(shap_row, index=feature_names)
+    feature_names = X.columns.tolist()                          #Get feature names
+    shap_series = pd.Series(shap_row, index=feature_names)      #Create a Series with SHAP values indexed by feature names
     top_features = shap_series.abs().nlargest(3)
 
     feature_description = ""
     for feat, shap_val in top_features.items():
-        actual_val = connection[feat]
-        avg_val = X[feat].mean()
-        feature_description += f"- {feat}: value={actual_val:.2f}, average={avg_val:.2f}, SHAP impact={shap_val:.4f}\n"
+        actual_val = connection[feat]                 #Get actual value of the feature for this connection  
+        avg_val = X[feat].mean()            #Get average value of the feature across the dataset    
+        feature_description += f"- {feat}: value={actual_val:.2f}, average={avg_val:.2f}, SHAP impact={shap_val:.4f}\n"           # need actual_val AND avg_val to explain why this feature is important for this specific connection
 
     prompt = f"""
 You are a cybersecurity analyst AI assistant.
@@ -74,3 +74,31 @@ Be concise and clear.
     )
 
     return top_features, message.content[0].text
+
+def calculate_priority(shap_row, prediction, anomaly_score, feature_names):
+    """
+    Combines ML prediction + SHAP impact + anomaly score
+    into a single priority level for SOC analysts
+    """
+    if prediction == 0:
+        return "LOW", 0.1, " Normal traffic — no action needed"
+    
+    # Calculate SHAP intensity
+    shap_series = pd.Series(abs(shap_row), index=feature_names)
+    shap_intensity = shap_series.nlargest(3).mean()
+    
+    # Normalize anomaly score (more negative = more anomalous)
+    anomaly_intensity = max(0, -anomaly_score)
+    
+    # Combined priority score (0 to 1)
+    priority_score = (shap_intensity * 0.6) + (anomaly_intensity * 0.4)
+    
+    # Assign priority level
+    if priority_score > 0.08:
+        return "CRITICAL", priority_score, " Immediate response required!"
+    elif priority_score > 0.04:
+        return "HIGH", priority_score, "Investigate within 15 minutes"
+    elif priority_score > 0.02:
+        return "MEDIUM", priority_score, "Investigate within 1 hour"
+    else:
+        return "LOW", priority_score, "Monitor — low risk"
