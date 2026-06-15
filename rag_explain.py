@@ -3,6 +3,7 @@ from sentence_transformers import SentenceTransformer
 from anthropic import Anthropic
 from dotenv import load_dotenv
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import pandas as pd
 
 load_dotenv()

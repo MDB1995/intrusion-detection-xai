@@ -1,6 +1,6 @@
 # Secret keys - NEVER upload
 .env
-
+.streamlit/secrets.toml
 # Virtual environment - too large
 venv/
 

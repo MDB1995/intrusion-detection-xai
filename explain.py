@@ -4,9 +4,20 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 import shap
 import matplotlib.pyplot as plt
+import streamlit as st
 
 load_dotenv()
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+try:
+    # Streamlit Cloud
+    api_key = st.secrets["ANTHROPIC_API_KEY"]
+except:
+    # Local development
+    load_dotenv()
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+
+client = Anthropic(api_key=api_key)
 
 def get_shap_values(model, X_sample):
     explainer = shap.TreeExplainer(model)

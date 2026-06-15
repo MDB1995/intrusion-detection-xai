@@ -8,6 +8,17 @@ st.set_page_config(
     layout="wide"
 )
 
+# ── Train model if needed ──────────────────────────────
+@st.cache_resource
+def initialize():
+    from train import train_and_save
+    train_and_save()
+    return True
+
+with st.spinner("⏳ Initializing system... please wait..."):
+    initialize()
+
+# ── Title ──────────────────────────────────────────────
 st.title("🛡️ Network Intrusion Detection System")
 st.markdown("*Explainable AI for Security Operations — Inspired by AI-REASON project*")
 st.divider()
@@ -34,6 +45,8 @@ st.markdown("""
 |---|---|
 | **Analysis** | Select and analyze network connections |
 | **Assistant** | Chat with AI security analyst |
+| **Feedback** | Rate AI explanations |
+| **Simulator** | Live SOC traffic simulation |
 | **About** | Learn about the project |
 """)
 

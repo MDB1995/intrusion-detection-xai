@@ -38,14 +38,39 @@ model, X_test, X = load_model()
 st.sidebar.title("Controls")
 st.sidebar.markdown("Select a connection to analyze:")
 
+# Remember slider position
+default_idx = st.session_state.get('sample_idx', 0)
+
 sample_idx = st.sidebar.slider(
     "Connection Number", 
     min_value=0, 
     max_value=100, 
-    value=0
+    value=default_idx
 )
 
+# Save slider position immediately
+st.session_state['sample_idx'] = sample_idx
+
 analyze_btn = st.sidebar.button("Analyze Connection", type="primary")
+
+# Add reset button
+# Only rerun if button clicked OR
+# analyzed before with SAME connection
+already_analyzed = (
+    'analyzed' in st.session_state and 
+    st.session_state.get('last_analyzed_idx') == sample_idx
+)
+
+if analyze_btn or already_analyzed:
+    if st.sidebar.button("🔄 Reset Analysis"):
+        for key in ['analyzed', 'connection', 'prediction', 
+                    'top_features', 'llm_explanation', 
+                    'rag_explanation', 'matched_threats',
+                    'sample_idx', 'shap_attack', 
+                    'shap_row', 'X_sample']:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
 
 # Main content
 X_sample = X_test.sample(101, random_state=42)
@@ -55,6 +80,12 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader(" Connection Details")
     connection = X_sample.iloc[sample_idx]
+    # Update session state when slider changes
+    if 'analyzed' in st.session_state:
+        st.session_state['sample_idx'] = sample_idx
+        st.session_state['connection'] = connection
+        prediction = model.predict([connection])[0]
+        st.session_state['prediction'] = prediction
     st.dataframe(
         connection.to_frame().rename(columns={connection.name: "Value"}),
         height=400
@@ -77,7 +108,7 @@ with col2:
 st.divider()
 
 # SHAP Analysis 
-if analyze_btn:
+if analyze_btn or 'analyzed' in st.session_state:
     with st.spinner("Running full analysis..."):
     
     # Calculate SHAP
@@ -104,6 +135,7 @@ if analyze_btn:
 
         # ── Save to session state ──────────────────────────
         st.session_state['analyzed'] = True
+        st.session_state['last_analyzed_idx'] = sample_idx
         st.session_state['connection'] = connection
         st.session_state['prediction'] = prediction
         st.session_state['top_features'] = top_features
