@@ -160,7 +160,14 @@ if run_btn:
     for i in range(n_connections):
         scenario = random.choices(scenarios, weights=weights)[0]
         conn_dict = scenario["generator"]()
-        conn_df = pd.DataFrame([conn_dict])[feature_names]
+        # Create dataframe with only available features
+        conn_df = pd.DataFrame([conn_dict])
+        # Add missing columns with 0
+        for col in feature_names:
+            if col not in conn_df.columns:
+                conn_df[col] = 0
+        # Select only needed columns in right order
+        conn_df = conn_df[feature_names]
 
         prediction = model.predict(conn_df)[0]
         proba = model.predict_proba(conn_df)[0][1]
