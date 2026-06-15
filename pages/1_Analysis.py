@@ -27,9 +27,22 @@ st.divider()
 # Load and train model
 @st.cache_resource
 def load_model():
-    model = joblib.load('model.pkl')
-    X_test = joblib.load('X_test.pkl')
-    X = joblib.load('X.pkl')
+    import os
+    from train import train_and_save
+    
+    # Find correct path
+    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    model_path = os.path.join(base_path, 'model.pkl')
+    xtest_path = os.path.join(base_path, 'X_test.pkl')
+    x_path = os.path.join(base_path, 'X.pkl')
+    
+    # Train if needed
+    os.chdir(base_path)
+    train_and_save()
+    
+    model = joblib.load(model_path)
+    X_test = joblib.load(xtest_path)
+    X = joblib.load(x_path)
     return model, X_test, X
 
 model, X_test, X = load_model()
