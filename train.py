@@ -14,7 +14,8 @@ def train_and_save():
     print("Downloading KDD99 dataset...")
     
     # Use sklearn built-in dataset
-    data = fetch_kddcup99(subset='SA', as_frame=True, percent10=True)
+    #data = fetch_kddcup99(subset='SA', as_frame=True, percent10=True)
+    data = fetch_kddcup99(as_frame=True, percent10=True)
     df = data.frame
     
     # Rename label column
