@@ -125,6 +125,9 @@ streamlit run app.py
 
 ---
 
+## 🌐 Live Demo
+**[Click here to access the live app](https://intrusion-detection-xai-amadzq2yjuqxpza7z4xuqg.streamlit.app/)**
+
 ## 🔮 Future PhD Research Direction
 
 - Industrial protocols — Modbus, DNP3, OPC-UA
